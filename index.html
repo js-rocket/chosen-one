@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <title>Tribute Selector</title>
+  <meta name="description" content="Tribute Selector">
+  <meta name="author" content="Jason">
+
+  <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    .content {
+      font-family: sans-serif;
+    }
+
+    .content h2 {
+      text-align: center;
+    }
+
+    .content p {
+      text-align: center;
+    }
+
+    .content .cta {
+      text-align: center;
+    }
+
+    .content th {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .content table {
+      width: 100%;
+      border-spacing: 0;
+    }
+
+    .content table,
+    th,
+    td {
+      border: none;
+      text-align: left;
+      padding: 8px;
+    }
+
+    .content td:first-child {
+      width: 200px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="content">
+    <h2>Happy Hunger Games!</h2>
+    <p>May the odds be ever in your favor</p>
+    <div id="output"></div>
+    <div class="cta">
+      <button onclick="chooseClicked()">Select Tribute</button>
+      <button onclick="clearClicked()">Clear List (except last 4)</button>
+    </div>
+  </div>
+</body>
+
+<!-- START: Copy pasted firebase initialization -->
+<script src="https://www.gstatic.com/firebasejs/4.9.0/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyA5GVu9FS0eyrcqo_qWvd0StkFC5RVjCnM",
+    authDomain: "thechosenone-8888.firebaseapp.com",
+    databaseURL: "https://thechosenone-8888.firebaseio.com",
+    projectId: "thechosenone-8888",
+    storageBucket: "",
+    messagingSenderId: "448839744512"
+  };
+  firebase.initializeApp(config);
+
+</script>
+<!-- END: Copy pasted firebase initialization -->
+
+
+<script>
+  // The good stuff
+  var THE_LIST = [];
+  var CANDIDATES = [
+    "Allen",
+    "Chhavi",
+    "Jason",
+    "Jen",
+    "Julien",
+    "Ludo",
+    "Max"
+  ];
+
+  // read the database value
+  var tableOne = firebase.database().ref('table1/');
+
+  // updates value in real time
+  tableOne.on('value', function (snapshot) {
+    ShowTable(snapshot.val());
+  });
+
+  // only read data once on page load
+  // tableOne.once('value').then(function (snapshot) {
+  //   ShowTable(snapshot.val());
+  //   closeFirebase();
+  // });
+
+  function ID(o) { return document.getElementById(o); };
+
+  function ShowTable(table) {
+    THE_LIST = table;
+
+    var output = '';
+    if (Array.isArray(table)) {
+      output = '<table><tbody>'
+      output += '<tr><th>Date</th><th>Who</th></tr>';
+      for (var i in table) {
+        var theDate = new Date(table[i].when);
+        output += '<tr><td>' + theDate.toDateString() + '</td><td>' + table[i].who + '</td></tr>';
+      }
+      output += '</tbody></table>';
+    }
+    ID('output').innerHTML = output;
+  }
+
+  function closeFirebase() {
+    firebase.app().delete().then(function () {
+      // console.log('firebase closed');
+    });
+  }
+
+  function saveNewList(newList) {
+    //firebase.initializeApp(config);
+    var updates = {};
+    updates['/table1'] = newList;
+    firebase.database().ref().update(updates);
+
+    //setTimeout(closeFirebase, 2000);
+  }
+
+  function clearClicked() {
+    var clearEntry = THE_LIST.slice(-4);
+    saveNewList(clearEntry);
+  }
+
+  function randomInterval(min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  function pickRandom() {
+    return CANDIDATES[randomInterval(1, CANDIDATES.length) - 1];
+  }
+
+  function alreadyInList(chosen) {
+    var checkLimit = Math.min(4, THE_LIST.length);
+
+    for (var i = 0; i < checkLimit; i++) {
+      if (THE_LIST[THE_LIST.length-i-1].who === chosen) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function chooseClicked() {
+    var chosenOne = pickRandom();
+    while (alreadyInList(chosenOne)) {
+      chosenOne = pickRandom();
+    }
+
+    var Message = "The next tribute from district " + randomInterval(2,12) + ' will be: ' + chosenOne;
+    if (confirm(Message + "\nDo you wish to record this?")) {
+      THE_LIST.push({ "when": (new Date()).toString(), "who": chosenOne });
+      saveNewList(THE_LIST);
+      ShowTable(THE_LIST);
+    };
+  }
+
+</script>
+
+</html>
