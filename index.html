@@ -161,7 +161,9 @@
   }
 
   function alreadyInList(chosen) {
-    if (!THE_LIST || THE_LIST.length === 0) return false;
+    if (!THE_LIST || !Array.isArray(THE_LIST)) return false;
+    if (THE_LIST.length === 0) return false;
+
     var checkLimit = Math.min(4, THE_LIST.length);
 
     for (var i = 0; i < checkLimit; i++) {
